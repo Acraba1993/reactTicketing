@@ -10,6 +10,15 @@ export const homeStyles = {
     border: '1px solid #ccc',
     fontSize: '1rem',
   },
+  saleButton: {
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    marginTop: '10px',
+  },
   mainContent: {
     display: 'flex',
     justifyContent: 'space-between',

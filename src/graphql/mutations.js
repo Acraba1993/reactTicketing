@@ -25,3 +25,17 @@ export const LOGIN_MUTATION = gql`
     }
   }
 `;
+
+export const CREATE_SALE = gql`
+mutation CreateSale($createSaleInput: CreateSaleInput!) {
+  createSale(createSaleInput: $createSaleInput) {
+    saleID
+    saleDate
+    total
+    tickets {
+      ticketID
+      price
+    }
+  }
+}
+`

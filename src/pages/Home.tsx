@@ -1,9 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
-import { useQuery } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import { GET_EVENTS_TICKETS_BY_ID_USER } from '../graphql/querys';
 import { Ticket } from '../interfaces/Tickets';
 import { homeStyles } from '../assets/styles/homeStyle'; // Importamos los estilos
+import { CREATE_SALE } from '../graphql/mutations';
 
 const Home = () => {
   const { user } = useContext(AuthContext);
@@ -15,7 +16,11 @@ const Home = () => {
     skip: !user,
   });
 
-  if (!user) {return <p>No estás autenticado!!</p>;}
+  const [createSale, { loading: saleLoading, error: saleError }] = useMutation(CREATE_SALE);
+
+  if (!user) {
+    return <p>No estás autenticado!!</p>;
+  }
 
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -26,12 +31,53 @@ const Home = () => {
   };
 
   const handleTicketClick = (ticket: Ticket) => {
+    if (!ticket.ticketID) {
+      console.error("Ticket without an id:", ticket);
+      return;
+    }
     if (ticket.state !== 'sold') {
       setSelectedTickets((prevTickets) =>
-        prevTickets.includes(ticket)
-          ? prevTickets.filter((t) => t !== ticket)
+        prevTickets.some((t) => t.ticketID === ticket.ticketID)
+          ? prevTickets.filter((t) => t.ticketID !== ticket.ticketID)
           : [...prevTickets, ticket]
       );
+    }
+  };
+
+  const handleSale = async () => {
+    if (selectedTickets.length === 0) {
+      alert("No hay boletos seleccionados");
+      return;
+    }
+
+    const ticketIds = selectedTickets.map(ticket => ticket.ticketID).filter(id => id);
+
+    // Comprobación de ids válidos
+    if (ticketIds.length !== selectedTickets.length) {
+      console.error("Error: algunos boletos no tienen un ID válido.");
+      alert("Error al procesar los boletos seleccionados. Por favor, intenta nuevamente.");
+      return;
+    }
+    const createSaleInput = {
+      createSaleInput: {
+        userId: user.id,
+        ticketIds,
+        saleDate: new Date().toISOString(),
+        total: totalPrice,
+      },
+    };
+
+    console.log("Datos de la venta:", createSaleInput);
+
+    try {
+      const { data } = await createSale({
+        variables: createSaleInput,
+      });
+      alert(`Venta realizada con éxito! ID de la venta: ${data.createSale.saleID}`);
+      setSelectedTickets([]);
+    } catch (error) {
+      console.error("Error al realizar la venta:", error);
+      alert("Error al realizar la venta");
     }
   };
 
@@ -81,9 +127,6 @@ const Home = () => {
                     }}
                   >
                     <p>
-                      <strong>Sección:</strong> {ticket.section}
-                    </p>
-                    <p>
                       <strong>Fila:</strong> {ticket.row}
                     </p>
                     <p>
@@ -91,9 +134,6 @@ const Home = () => {
                     </p>
                     <p>
                       <strong>Precio:</strong> {ticket.price}
-                    </p>
-                    <p>
-                      <strong>Estado:</strong> {ticket.state}
                     </p>
                   </div>
                 ))}
@@ -124,9 +164,14 @@ const Home = () => {
             ))}
           </ul>
           <h3>Total: ${totalPrice}</h3>
+          <button onClick={handleSale} disabled={saleLoading} style={homeStyles.saleButton}>
+            {saleLoading ? 'Procesando...' : 'Realizar Venta'}
+          </button>
+          {saleError && <p>Error al realizar la venta: {saleError.message}</p>}
         </div>
       </div>
     </div>
   );
 };
+
 export default Home;

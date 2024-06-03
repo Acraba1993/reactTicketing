@@ -19,15 +19,16 @@ export const GET_EVENTS_TICKETS_BY_ID_USER = gql
     id
     name
     date
-    description
     hour
     location
+    description
     tickets {
-      price
+      ticketID
+      section
       row
       seat
+      price
       state
-      section
     }
   }
 }`
