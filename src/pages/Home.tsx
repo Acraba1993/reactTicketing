@@ -1,22 +1,35 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { GET_EVENTS_TICKETS_BY_ID_USER } from '../graphql/querys';
 import { Ticket } from '../interfaces/Tickets';
-import { homeStyles } from '../assets/styles/homeStyle'; // Importamos los estilos
-import { CREATE_SALE } from '../graphql/mutations';
+import { homeStyles } from '../assets/styles/homeStyle';
 
 const Home = () => {
   const { user } = useContext(AuthContext);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [selectedTickets, setSelectedTickets] = useState<Ticket[]>([]);
+  const navigate = useNavigate();
+
+  const [selectedEventId, setSelectedEventId] = useState<string>(
+    localStorage.getItem('selectedEventId') || ''
+  );
+  const [selectedTickets, setSelectedTickets] = useState<Ticket[]>(() => {
+    const savedTickets = localStorage.getItem('selectedTickets');
+    return savedTickets ? JSON.parse(savedTickets) : [];
+  });
 
   const { loading, error, data } = useQuery(GET_EVENTS_TICKETS_BY_ID_USER, {
     variables: { userId: user ? user.id : '' },
     skip: !user,
   });
 
-  const [createSale, { loading: saleLoading, error: saleError }] = useMutation(CREATE_SALE);
+  useEffect(() => {
+    localStorage.setItem('selectedEventId', selectedEventId);
+  }, [selectedEventId]);
+
+  useEffect(() => {
+    localStorage.setItem('selectedTickets', JSON.stringify(selectedTickets));
+  }, [selectedTickets]);
 
   if (!user) {
     return <p>No estás autenticado!!</p>;
@@ -44,51 +57,21 @@ const Home = () => {
     }
   };
 
-  const handleSale = async () => {
+  const handleSale = () => {
     if (selectedTickets.length === 0) {
       alert("No hay boletos seleccionados");
       return;
     }
 
-    const ticketIds = selectedTickets.map(ticket => ticket.ticketID).filter(id => id);
-
-    // Comprobación de ids válidos
-    if (ticketIds.length !== selectedTickets.length) {
-      console.error("Error: algunos boletos no tienen un ID válido.");
-      alert("Error al procesar los boletos seleccionados. Por favor, intenta nuevamente.");
-      return;
-    }
-    const createSaleInput = {
-      createSaleInput: {
-        userId: user.id,
-        ticketIds,
-        saleDate: new Date().toISOString(),
-        total: totalPrice,
-      },
-    };
-
-    console.log("Datos de la venta:", createSaleInput);
-
-    try {
-      const { data } = await createSale({
-        variables: createSaleInput,
-      });
-      alert(`Venta realizada con éxito! ID de la venta: ${data.createSale.saleID}`);
-      setSelectedTickets([]);
-    } catch (error) {
-      console.error("Error al realizar la venta:", error);
-      alert("Error al realizar la venta");
-    }
+    const totalPrice = selectedTickets.reduce((total, ticket) => total + ticket.price, 0);
+    navigate('/confirm-sale', { state: { selectedTickets, totalPrice } });
   };
 
   const selectedEvent = data.userEvents.find((event: any) => event.id === selectedEventId);
 
-  // Calcular el total de los boletos seleccionados
-  const totalPrice = selectedTickets.reduce((total, ticket) => total + ticket.price, 0);
-
   return (
     <div style={homeStyles.container}>
-      <select onChange={handleEventChange} style={homeStyles.selector}>
+      <select onChange={handleEventChange} value={selectedEventId} style={homeStyles.selector}>
         <option value="">Selecciona un evento</option>
         {data.userEvents.map((event: any) => (
           <option key={event.id} value={event.id}>
@@ -163,11 +146,10 @@ const Home = () => {
               </li>
             ))}
           </ul>
-          <h3>Total: ${totalPrice}</h3>
-          <button onClick={handleSale} disabled={saleLoading} style={homeStyles.saleButton}>
-            {saleLoading ? 'Procesando...' : 'Realizar Venta'}
+          <h3>Total: ${selectedTickets.reduce((total, ticket) => total + ticket.price, 0)}</h3>
+          <button onClick={handleSale} style={homeStyles.saleButton}>
+            Realizar Venta
           </button>
-          {saleError && <p>Error al realizar la venta: {saleError.message}</p>}
         </div>
       </div>
     </div>
