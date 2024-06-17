@@ -7,7 +7,7 @@ import { Ticket } from '../interfaces/Tickets';
 import { homeStyles } from '../assets/styles/homeStyle';
 
 const Home = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [selectedEventId, setSelectedEventId] = useState<string>(
@@ -26,10 +26,6 @@ const Home = () => {
   useEffect(() => {
     localStorage.setItem('selectedEventId', selectedEventId);
   }, [selectedEventId]);
-
-  useEffect(() => {
-    localStorage.setItem('selectedTickets', JSON.stringify(selectedTickets));
-  }, [selectedTickets]);
 
   if (!user) {
     return <p>No estás autenticado!!</p>;

@@ -6,8 +6,6 @@ import App from './TicketingApp';
 
 import client from './apolloClient';
 
-// import './index.css';
-
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ApolloProvider client={client}>

@@ -34,8 +34,10 @@ mutation CreateSale($createSaleInput: CreateSaleInput!) {
     total
     tickets {
       ticketID
-      price
     }
+    email
+    name
+    phone
   }
 }
 `

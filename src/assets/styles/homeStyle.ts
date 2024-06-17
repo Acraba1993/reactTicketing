@@ -49,4 +49,12 @@ export const homeStyles = {
     borderRadius: '5px',
     backgroundColor: '#f9f9f9',
   },
+  input: {
+    display: 'block',
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '5px',
+  },
 };

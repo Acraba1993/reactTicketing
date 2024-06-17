@@ -2,8 +2,9 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { LOGIN_MUTATION } from '../graphql/mutations';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext} from '../contexts/AuthContext';
 import { loginStyles } from '../assets/styles/LoginStyles'; // Importamos los estilos
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loginMutation, { loading }] = useMutation(LOGIN_MUTATION);
+  const { token, isAdmin } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
